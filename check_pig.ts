@@ -1,0 +1,1 @@
+import { prisma } from './src/lib/prisma'; async function main() { const pig = await prisma.pig.findFirst({ where: { earTag: { contains: '017' } }, include: { pen: true } }); console.log(JSON.stringify(pig, null, 2)); } main().finally(() => prisma.$disconnect());

@@ -71,8 +71,8 @@ export default async function proxy(request: NextRequest) {
       .filter(Boolean)
 
     if (allowedList.length > 0) {
-      // Nếu không có tên miền nào khớp với danh sách cho phép
-      if (!allowedList.includes(domain)) {
+      // Luôn cho phép localhost và 127.0.0.1 để tránh tự khóa mình khi code
+      if (domain !== 'localhost' && domain !== '127.0.0.1' && !allowedList.includes(domain)) {
         return new NextResponse(
           `<!DOCTYPE html><html><head><title>403 Forbidden</title><meta charset="utf-8"></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f87171;color:white;text-align:center;"><div><h1 style="font-size:3rem;margin-bottom:0.5rem">403 Forbidden</h1><p>Tên miền truy cập (<b>${domain}</b>) chưa được cấp phép truy cập vào hệ thống này.</p></div></body></html>`,
           { status: 403, headers: { 'content-type': 'text/html' } }

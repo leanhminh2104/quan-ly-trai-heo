@@ -13,10 +13,26 @@ const nextProcess = spawn('npm', ['run', 'dev:next'], {
   
   try {
     const tunnel = await localtunnel({ port: 3000, subdomain: 'dalymmo' });
+    const tunnelDomain = new URL(tunnel.url).hostname;
+    
     console.log('\n======================================================');
     console.log(`🌍 TRẠI LỢN ONLINE SẴN SÀNG TẠI: ${tunnel.url}`);
-    console.log('   (Lưu ý copy tên miền này vào mục Khóa Tên Miền)');
     console.log('======================================================\n');
+    
+    // Tự động nhét tên miền này vào danh sách Whitelist
+    try {
+      const res = await fetch('http://localhost:3000/api/internal/register-domain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: tunnelDomain })
+      });
+      const data = await res.json();
+      if (data.success) {
+        console.log(`✅ Đã tự động cấp phép cho tên miền: ${tunnelDomain}`);
+      }
+    } catch(e) {
+      console.log('⚠️ Không thể tự động cấp phép tên miền. Vui lòng tự thêm bằng tay trong Cài đặt.');
+    }
     
     tunnel.on('close', () => {
       console.log('🔴 Đã đóng kết nối HTTPS Public.');
