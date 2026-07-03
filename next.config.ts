@@ -2,8 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-
-  allowedDevOrigins: ['192.168.1.22', 'localhost', 'dalymmo.nport.link', 'dalymmo.nport.link:443'],
+  serverActions: {
+    allowedOrigins: [
+      'localhost:3000',
+      'dalymmo.loca.lt',
+      '*.loca.lt'
+    ],
+  },
 };
 
 export default nextConfig;
