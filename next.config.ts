@@ -6,7 +6,8 @@ const nextConfig: NextConfig = {
     allowedOrigins: [
       'localhost:3000',
       'dalymmo.loca.lt',
-      '*.loca.lt'
+      '*.loca.lt',
+      '*.vercel.app'
     ],
   },
 };
