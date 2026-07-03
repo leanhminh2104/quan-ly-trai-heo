@@ -10,19 +10,21 @@ interface CyberSwitchProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
   className?: string
 }
 
-export function CyberSwitch({ checked, onCheckedChange, disabled, className, ...props }: CyberSwitchProps) {
+export function CyberSwitch({ checked, onCheckedChange, disabled, className, id, ...props }: CyberSwitchProps) {
+  const generatedId = React.useId()
+  const switchId = id || `cyber-switch-${generatedId}`
   return (
     <div className={cn("cyber-toggle-wrapper", disabled && "opacity-50 pointer-events-none", className)}>
       <input
         className="cyber-toggle-checkbox"
-        id="cyber-toggle"
+        id={switchId}
         type="checkbox"
         checked={checked}
         onChange={(e) => onCheckedChange?.(e.target.checked)}
         disabled={disabled}
         {...props}
       />
-      <label className="cyber-toggle" htmlFor="cyber-toggle">
+      <label className="cyber-toggle" htmlFor={switchId}>
         <div className="cyber-toggle-track">
           <div className="cyber-toggle-track-glow"></div>
           <div className="cyber-toggle-track-dots">

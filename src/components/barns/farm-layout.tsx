@@ -1192,8 +1192,6 @@ export function FarmLayout({
         </div>
       </div>
 
-      </div>
-
       {/* ── FARM LAYOUT ── */}
       <DndContext
         id="farm-dnd-context"
