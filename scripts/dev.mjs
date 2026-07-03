@@ -43,15 +43,15 @@ process.stdin.on('data', (data) => {
       console.log('⚠️ Không tìm thấy NGROK_AUTHTOKEN trong .env. Bỏ qua khởi động đường hầm.');
       return;
     }
-
-    const tunnelDomain = 'rubble-hurling-earful.ngrok-free.dev';
     
-    // Khởi động Ngrok
+    // Khởi động Ngrok (Tự động lấy tên miền ngẫu nhiên)
     const listener = await ngrok.forward({
       addr: 3000,
       authtoken: NGROK_AUTHTOKEN,
-      domain: tunnelDomain,
     });
+    
+    const tunnelUrl = listener.url();
+    const tunnelDomain = new URL(tunnelUrl).hostname;
     
     console.log('\n======================================================');
     console.log(`🌍 TRẠI LỢN ONLINE SẴN SÀNG TẠI: https://${tunnelDomain}`);
