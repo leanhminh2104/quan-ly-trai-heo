@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # Cập nhật các gói npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    assignees:
+      - "leanhminh2104"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+  
+  # Cập nhật GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    assignees:
+      - "leanhminh2104"
