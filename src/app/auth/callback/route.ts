@@ -5,9 +5,14 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
+
+  // Lấy đúng tên miền gốc kể cả khi qua proxy (Ngrok, Vercel)
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || 'localhost:3000';
+  const protocol = request.headers.get('x-forwarded-proto') || 'http';
+  const realOrigin = `${protocol}://${host}`;
 
   if (code) {
     const cookieStore = await cookies()
@@ -92,10 +97,10 @@ export async function GET(request: Request) {
           }
 
           if (!isActive) {
-            return NextResponse.redirect(`${origin}/pending-approval`)
+            return NextResponse.redirect(`${realOrigin}/pending-approval`)
           }
         } else if (!existingUser.isActive) {
-          return NextResponse.redirect(`${origin}/pending-approval`)
+          return NextResponse.redirect(`${realOrigin}/pending-approval`)
         }
       } catch (dbError) {
         console.error('Error handling Google OAuth callback DB sync:', dbError)
@@ -104,5 +109,5 @@ export async function GET(request: Request) {
   }
 
   // Return the user to an error page or destination
-  return NextResponse.redirect(`${origin}${next}`)
+  return NextResponse.redirect(`${realOrigin}${next}`)
 }
