@@ -1,5 +1,13 @@
 import { spawn } from 'child_process';
-import localtunnel from 'localtunnel';
+import ngrok from '@ngrok/ngrok';
+import fs from 'fs';
+
+let NGROK_AUTHTOKEN = '';
+try {
+  const envContent = fs.readFileSync('.env', 'utf8');
+  const tokenMatch = envContent.match(/NGROK_AUTHTOKEN="?([^"\n]+)"?/);
+  if (tokenMatch) NGROK_AUTHTOKEN = tokenMatch[1];
+} catch (e) {}
 
 let nextProcess = null;
 
@@ -31,11 +39,22 @@ process.stdin.on('data', (data) => {
   await new Promise(resolve => setTimeout(resolve, 5000));
   
   try {
-    const tunnel = await localtunnel({ port: 3000, subdomain: 'dalymmo' });
-    const tunnelDomain = new URL(tunnel.url).hostname;
+    if (!NGROK_AUTHTOKEN) {
+      console.log('⚠️ Không tìm thấy NGROK_AUTHTOKEN trong .env. Bỏ qua khởi động đường hầm.');
+      return;
+    }
+
+    const tunnelDomain = 'rubble-hurling-earful.ngrok-free.dev';
+    
+    // Khởi động Ngrok
+    const listener = await ngrok.forward({
+      addr: 3000,
+      authtoken: NGROK_AUTHTOKEN,
+      domain: tunnelDomain,
+    });
     
     console.log('\n======================================================');
-    console.log(`🌍 TRẠI LỢN ONLINE SẴN SÀNG TẠI: ${tunnel.url}`);
+    console.log(`🌍 TRẠI LỢN ONLINE SẴN SÀNG TẠI: https://${tunnelDomain}`);
     console.log('======================================================\n');
     
     // Tự động nhét tên miền này vào danh sách Whitelist
@@ -53,18 +72,10 @@ process.stdin.on('data', (data) => {
       console.log('⚠️ Không thể tự động cấp phép tên miền. Vui lòng tự thêm bằng tay trong Cài đặt.');
     }
     
-    tunnel.on('close', () => {
-      console.log('🔴 Đã đóng kết nối HTTPS Public.');
-    });
-
-    tunnel.on('error', (err) => {
-      console.error('Lỗi Tunnel:', err);
-    });
-
     // Graceful shutdown
-    const cleanup = () => {
-      console.log('\n⏳ Đang giải phóng kết nối...');
-      tunnel.close();
+    const cleanup = async () => {
+      console.log('\n⏳ Đang đóng kết nối Ngrok...');
+      try { await ngrok.disconnect(); } catch(e) {}
       if (nextProcess) nextProcess.kill('SIGINT');
       process.exit(0);
     };

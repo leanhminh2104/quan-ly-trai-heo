@@ -9,7 +9,9 @@ const nextConfig: NextConfig = {
     'dalymmo.nport.link:443',
     'dalymmo.loca.lt',
     '*.loca.lt',
-    '*.vercel.app'
+    '*.vercel.app',
+    '*.ngrok-free.dev',
+    '*.ngrok-free.app'
   ],
 };
 
