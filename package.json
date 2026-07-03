@@ -53,6 +53,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "localtunnel": "^2.0.2",
+    "nport": "^2.1.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
