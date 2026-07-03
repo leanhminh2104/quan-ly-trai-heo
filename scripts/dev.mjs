@@ -42,6 +42,17 @@ const nextProcess = spawn('npm', ['run', 'dev:next'], {
       console.error('Lỗi Tunnel:', err);
     });
 
+    // Graceful shutdown để giải phóng tên miền ngay lập tức
+    const cleanup = () => {
+      console.log('\n⏳ Đang giải phóng tên miền dalymmo...');
+      tunnel.close();
+      nextProcess.kill('SIGINT');
+      process.exit(0);
+    };
+
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
+
   } catch (error) {
     console.error('🔴 Lỗi khi mở HTTPS Public:', error.message);
   }
