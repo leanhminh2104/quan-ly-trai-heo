@@ -1,9 +1,28 @@
 import { spawn } from 'child_process';
 import localtunnel from 'localtunnel';
 
-const nextProcess = spawn('npm', ['run', 'dev:next'], {
-  stdio: 'inherit',
-  shell: true
+let nextProcess = null;
+
+function startNextJs() {
+  if (nextProcess) {
+    nextProcess.kill();
+    console.log('🔄 Đang khởi động lại Next.js...');
+  }
+  nextProcess = spawn('npm', ['run', 'dev:next'], {
+    stdio: 'inherit',
+    shell: true
+  });
+}
+
+// Khởi động lần đầu
+startNextJs();
+
+// Lắng nghe lệnh từ bàn phím
+process.stdin.on('data', (data) => {
+  const input = data.toString().trim().toLowerCase();
+  if (input === 'rs') {
+    startNextJs();
+  }
 });
 
 (async () => {
