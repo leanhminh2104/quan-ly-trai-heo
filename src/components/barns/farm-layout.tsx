@@ -1021,6 +1021,7 @@ export function FarmLayout({
 
       {/* ── FARM LAYOUT ── */}
       <DndContext
+        id="farm-dnd-context"
         sensors={sensors}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
