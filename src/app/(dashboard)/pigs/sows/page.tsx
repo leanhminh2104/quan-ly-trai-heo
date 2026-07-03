@@ -29,6 +29,8 @@ export default function SowsPage() {
     search: search || undefined,
     type: 'SOW',
     status,
+    sortBy: 'code',
+    sortOrder: 'asc',
   })
 
   const { mutate: deletePig, isPending: isDeleting } = useDeletePig()
