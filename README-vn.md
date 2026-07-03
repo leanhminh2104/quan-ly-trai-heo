@@ -1,7 +1,7 @@
 # Hệ Thống Quản Lý Trại Lợn Thông Minh (PFMS)
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fleanhminh2104%2Fquan-ly-trai-heo&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,DATABASE_URL,DIRECT_URL)
-![Version](https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge)
+![Phiên bản](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-beta-orange?style=for-the-badge)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
@@ -36,7 +36,7 @@ Nền tảng quản lý trang trại chăn nuôi lợn toàn diện chuẩn SaaS
 
 | Trường | Giá trị |
 | --- | --- |
-| Phiên bản ứng dụng | `0.1.0` |
+| Phiên bản ứng dụng | `2.0.0` |
 | Kênh phát hành | `beta` |
 | Nhánh chính | `main` |
 | Lần cập nhật cuối | `03-07-2026` |
