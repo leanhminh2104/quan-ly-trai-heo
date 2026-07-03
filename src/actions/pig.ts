@@ -158,7 +158,14 @@ export async function createPig(data: CreatePigInput): Promise<ActionResponse<Pi
       where: { code: validated.code, farmId: user.farmId, deletedAt: null }
     })
 
-    if (existingCode) return { success: false, error: 'Mã lợn đã tồn tại' }
+    if (existingCode) return { success: false, error: 'Mã lợn này đã tồn tại trong hệ thống. Vui lòng nhập mã khác.' }
+
+    if (validated.earTag) {
+      const existingEarTag = await prisma.pig.findFirst({
+        where: { earTag: validated.earTag, farmId: user.farmId, deletedAt: null }
+      })
+      if (existingEarTag) return { success: false, error: 'Số thẻ tai này đã tồn tại trong hệ thống. Vui lòng nhập số khác.' }
+    }
 
     const pig = await prisma.$transaction(async (tx) => {
       const newPig = await tx.pig.create({
@@ -221,6 +228,20 @@ export async function updatePig(id: string, data: Partial<UpdatePigInput>): Prom
     if (!canUpdate) return { success: false, error: 'Không có quyền' }
 
     const validated = updatePigSchema.partial().parse(data)
+
+    if (validated.code) {
+      const existingCode = await prisma.pig.findFirst({
+        where: { code: validated.code, farmId: user.farmId, deletedAt: null, id: { not: id } }
+      })
+      if (existingCode) return { success: false, error: 'Mã lợn này đã tồn tại trong hệ thống. Vui lòng nhập mã khác.' }
+    }
+
+    if (validated.earTag) {
+      const existingEarTag = await prisma.pig.findFirst({
+        where: { earTag: validated.earTag, farmId: user.farmId, deletedAt: null, id: { not: id } }
+      })
+      if (existingEarTag) return { success: false, error: 'Số thẻ tai này đã tồn tại trong hệ thống. Vui lòng nhập số khác.' }
+    }
 
     const pig = await prisma.$transaction(async (tx) => {
       const oldPig = await tx.pig.findUnique({ where: { id } })

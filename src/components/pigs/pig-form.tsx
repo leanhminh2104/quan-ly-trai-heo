@@ -81,6 +81,13 @@ export function PigForm({ initialId }: { initialId?: string }) {
       updatePig({ id: initialId, data }, {
         onSuccess: () => {
           router.back()
+        },
+        onError: (error) => {
+          if (error.message.includes('Mã lợn')) {
+            form.setError('code', { type: 'manual', message: error.message })
+          } else if (error.message.includes('thẻ tai')) {
+            form.setError('earTag', { type: 'manual', message: error.message })
+          }
         }
       })
     } else {
@@ -93,6 +100,13 @@ export function PigForm({ initialId }: { initialId?: string }) {
           else if (data.type === 'FATTENING') router.push('/pigs/fattening')
           else if (data.type === 'PIGLET') router.push('/pigs/piglets')
           else router.push('/pigs')
+        },
+        onError: (error) => {
+          if (error.message.includes('Mã lợn')) {
+            form.setError('code', { type: 'manual', message: error.message })
+          } else if (error.message.includes('thẻ tai')) {
+            form.setError('earTag', { type: 'manual', message: error.message })
+          }
         }
       })
     }
