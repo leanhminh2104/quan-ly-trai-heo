@@ -59,7 +59,7 @@ export default function LoginClient({ googleLoginEnabled = true, emailLoginEnabl
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djZoLTZ2LTZoNnptMC0zMHY2aC02VjRoNnptMjAgMjB2NmgtNnYtNmg2em0wLTIwdjZoLTZWNGg2em0tNDAgMjB2NmgtNnYtNmg2em0wLTIwdjZoLTZWNGg2eiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
         <div className="relative z-10 flex flex-col justify-center px-12 text-white">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 1, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
@@ -80,7 +80,7 @@ export default function LoginClient({ googleLoginEnabled = true, emailLoginEnabl
               ].map((item, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 1, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + i * 0.1 }}
                   className="flex items-center gap-2 text-sm text-white/90"
@@ -97,7 +97,7 @@ export default function LoginClient({ googleLoginEnabled = true, emailLoginEnabl
       {/* Right side - login form */}
       <div className="flex-1 flex items-center justify-center p-6 bg-background">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 1, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="w-full max-w-md space-y-8"
