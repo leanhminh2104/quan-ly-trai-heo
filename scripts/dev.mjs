@@ -1,4 +1,5 @@
 import { spawn } from 'child_process';
+import localtunnel from 'localtunnel';
 
 let nextProcess = null;
 
@@ -30,16 +31,11 @@ process.stdin.on('data', (data) => {
   await new Promise(resolve => setTimeout(resolve, 5000));
   
   try {
-    const tunnelDomain = 'dalymmo.nport.link';
-    
-    // Khởi động NPort
-    const nportProcess = spawn('npx', ['nport', '3000', '-s', 'dalymmo'], {
-      stdio: 'inherit',
-      shell: true
-    });
+    const tunnel = await localtunnel({ port: 3000, subdomain: 'dalymmo' });
+    const tunnelDomain = new URL(tunnel.url).hostname;
     
     console.log('\n======================================================');
-    console.log(`🌍 TRẠI LỢN ONLINE SẴN SÀNG TẠI: https://${tunnelDomain}`);
+    console.log(`🌍 TRẠI LỢN ONLINE SẴN SÀNG TẠI: ${tunnel.url}`);
     console.log('======================================================\n');
     
     // Tự động nhét tên miền này vào danh sách Whitelist
@@ -57,10 +53,18 @@ process.stdin.on('data', (data) => {
       console.log('⚠️ Không thể tự động cấp phép tên miền. Vui lòng tự thêm bằng tay trong Cài đặt.');
     }
     
+    tunnel.on('close', () => {
+      console.log('🔴 Đã đóng kết nối HTTPS Public.');
+    });
+
+    tunnel.on('error', (err) => {
+      console.error('Lỗi Tunnel:', err);
+    });
+
     // Graceful shutdown
     const cleanup = () => {
-      console.log('\n⏳ Đang đóng kết nối NPort...');
-      if (nportProcess) nportProcess.kill('SIGINT');
+      console.log('\n⏳ Đang giải phóng kết nối...');
+      tunnel.close();
       if (nextProcess) nextProcess.kill('SIGINT');
       process.exit(0);
     };
@@ -69,6 +73,6 @@ process.stdin.on('data', (data) => {
     process.on('SIGTERM', cleanup);
 
   } catch (error) {
-    console.error('🔴 Lỗi khi mở kết nối NPort:', error.message);
+    console.error('🔴 Lỗi khi mở HTTPS Public:', error.message);
   }
 })();
