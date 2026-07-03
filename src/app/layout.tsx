@@ -29,26 +29,28 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <div id="pfms-root" className="flex min-h-screen flex-col">
           <QueryProvider>
-            <TooltipProvider>
-              {children}
-            </TooltipProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <TooltipProvider>
+                {children}
+              </TooltipProvider>
+            </ThemeProvider>
           </QueryProvider>
-          <Toaster
-            position="top-right"
-            richColors
-            closeButton
-            toastOptions={{
-              duration: 4000,
-            }}
-          />
-        </ThemeProvider>
+        </div>
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          toastOptions={{
+            duration: 4000,
+          }}
+        />
       </body>
     </html>
   )

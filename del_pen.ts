@@ -1,1 +1,0 @@
-import { prisma } from './src/lib/prisma'; async function main() { await prisma.pen.update({ where: { id: 'cmr4hfiyh0000v8hn950lcvv5' }, data: { deletedAt: new Date(), isActive: false, code: 'DELETED_HB17-17' } }); console.log('Soft deleted duplicate pen'); } main().finally(() => prisma.$disconnect());

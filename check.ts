@@ -1,1 +1,0 @@
-import { prisma } from './src/lib/prisma'; async function main() { const pens = await prisma.pen.findMany({ where: { OR: [{ code: { contains: '17-17' } }, { name: { contains: '17-17' } }] } }); console.log(JSON.stringify(pens.map(p=>({id: p.id, code: p.code, name: p.name})), null, 2)); } main().finally(() => prisma.$disconnect());

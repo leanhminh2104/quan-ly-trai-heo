@@ -1,1 +1,0 @@
-import { getBarnHierarchy } from './src/actions/barn'; async function main() { const res = await getBarnHierarchy(); console.log(JSON.stringify(res.data?.map(z => z.rows.map(r => r.barns.map(b => b.pens.filter(p => p.code === 'HB17-17').map(p => p.code))))), null, 2)); } main();

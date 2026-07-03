@@ -653,7 +653,7 @@ function ZoomPanContainer({ children, overlay, bottomPanel }: { children: React.
     const isPig = (e.target as HTMLElement).closest('[data-pig="true"]')
     if (isLocked || !isPig) {
       setIsPanning(true)
-      panStart.current = { x: e.clientX, y: e.clientY, tx: translate.x, ty: translate.y }
+      panStart.current = { x: e.clientX, y: e.clientY, tx: translate.x, ty: translate.y, dist: 1, scale: scale }
     }
   }, [translate, isLocked])
 
@@ -1232,7 +1232,7 @@ export function FarmLayout({
                   </div>
 
                   {/* ── Center: Biogas + Pens 4-7 ── */}
-                  <div className="flex flex-col gap-1.5" style={{ width: '35%' }}>
+                  <div className="flex flex-col gap-1.5 flex-1">
                     {/* Biogas (Gộp Hố chứa nước thải cũ) */}
                     <StaticBlock className="bg-white dark:bg-gray-950 border-2 border-gray-300 dark:border-gray-700 flex-[2]">
                       <span className="text-gray-800 dark:text-gray-400 text-sm tracking-widest uppercase font-bold">Biogas</span>
@@ -1247,8 +1247,14 @@ export function FarmLayout({
                     </div>
                   </div>
 
+                  {/* ── Lối đi thẳng ── */}
+                  <div className="w-[4%] shrink-0 flex items-center justify-center relative">
+                    <div className="absolute top-0 pt-2 text-[10px] font-black tracking-widest text-amber-500/60 dark:text-amber-400/60 uppercase">CỬA</div>
+                    <div className="h-full w-px border-l-2 border-dashed border-amber-400/30" />
+                  </div>
+
                   {/* ── Right: Pens 1, 2, 3 and Empty Space ── */}
-                  <div className="flex flex-col gap-4 flex-1">
+                  <div className="flex flex-col gap-4 shrink-0" style={{ width: '22%' }}>
                     {/* Pens 1, 2, 3 */}
                     <div className="flex flex-col gap-1.5 flex-[2.5]">
                       <DroppablePen pen={getPen('1')} layoutCode="1" label="1" defaultPenName="Sàn lợn đẻ 1" variant="sow" className="flex-1" />
@@ -1279,9 +1285,9 @@ export function FarmLayout({
                     </StaticBlock>
                   </div>
 
-                  {/* Pens 13 → 8 */}
+                  {/* Pens 12 → 8 */}
                   <div className="flex-1 flex gap-1.5">
-                    {[13, 12, 11, 10, 9, 8].map(n => (
+                    {[12, 11, 10, 9, 8].map(n => (
                       <DroppablePen
                         key={n}
                         pen={getPen(String(n))}
@@ -1292,6 +1298,11 @@ export function FarmLayout({
                         className="flex-1"
                       />
                     ))}
+                  </div>
+
+                  {/* ── Lối đi thẳng ── */}
+                  <div className="w-[4%] shrink-0 flex items-center justify-center">
+                    <div className="h-full w-px border-l-2 border-dashed border-amber-400/30" />
                   </div>
 
                   {/* Chuồng lợn đực 1-3 */}
@@ -1311,9 +1322,9 @@ export function FarmLayout({
                 </div>
 
                 {/* ═════ BOTTOM SECTION ═════ */}
-                <div className="flex" style={{ minHeight: '100px' }}>
+                <div className="flex gap-4" style={{ minHeight: '100px' }}>
                   {/* Lợn thịt 1, 2 và Lợn con 1 */}
-                  <div className="flex gap-1.5 flex-[0.78]">
+                  <div className="flex gap-1.5 flex-1">
                     {/* Lợn thịt 1 */}
                     <div
                       className="flex-1 rounded-lg border-2 border-gray-300 dark:border-gray-600 overflow-hidden"
@@ -1337,16 +1348,17 @@ export function FarmLayout({
                     </div>
 
                     {/* Lợn con 1 */}
-                    <DroppablePen pen={getPen('LC1') || getPen('Lợn con 1')} layoutCode="LC1" label="Lợn con 1" variant="piglet" className="flex-[0.7]" />
+                    <DroppablePen pen={getPen('LC1') || getPen('Lợn con 1')} layoutCode="LC1" label="Lợn con 1" variant="piglet" className="flex-1" />
                   </div>
 
                   {/* Lối đi dọc / Cửa ra dưới */}
-                  <div className="w-[4%] relative flex items-end justify-center pb-2">
+                  <div className="w-[4%] shrink-0 relative flex items-end justify-center pb-2">
+                    <div className="absolute inset-y-0 w-px border-l-2 border-dashed border-amber-400/30" />
                     <ExitLabel direction="down" className="absolute -bottom-8" />
                   </div>
 
                   {/* Lợn con 2 */}
-                  <div className="flex-[0.22] pr-1.5">
+                  <div className="shrink-0" style={{ width: '22%' }}>
                     <DroppablePen pen={getPen('LC2') || getPen('Lợn con 2')} layoutCode="LC2" label="Lợn con 2" variant="piglet" className="h-full" />
                   </div>
                 </div>
