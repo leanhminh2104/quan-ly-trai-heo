@@ -1,13 +1,13 @@
 // Bản quyền thuộc dalymmo.com
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { updateGoogleLoginStatus, updateSystemParameter, updateEmailLoginStatus, updateAllowedDomains } from '@/actions/security'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/page-header'
 import { CyberSwitch } from '@/components/ui/cyber-switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ShieldCheck, Mail, Info, ExternalLink, Wrench, UserCheck, GlobeLock } from 'lucide-react'
+import { ShieldCheck, Mail, Info, ExternalLink, Wrench, UserCheck, GlobeLock, X } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -28,8 +28,25 @@ export default function SecurityClient({ initialGoogleLoginEnabled, initialMaint
   const [autoActivate, setAutoActivate] = useState(initialAutoActivate)
   const [domainWhitelistEnabled, setDomainWhitelistEnabled] = useState(initialDomainWhitelistEnabled)
   const [allowedDomains, setAllowedDomains] = useState(initialAllowedDomains)
+  const [domainInput, setDomainInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  // Tự động thêm tên miền hiện tại để tránh tự khóa mình
+  useEffect(() => {
+    if (typeof window !== 'undefined' && domainWhitelistEnabled) {
+      const currentHost = window.location.hostname.toLowerCase()
+      const list = allowedDomains.split(',').map(d => d.trim().toLowerCase()).filter(Boolean)
+      if (!list.includes(currentHost)) {
+        list.push(currentHost)
+        const newList = list.join(', ')
+        setAllowedDomains(newList)
+        startTransition(() => {
+          updateAllowedDomains(newList)
+        })
+      }
+    }
+  }, [domainWhitelistEnabled]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleToggleDomainWhitelist = async (checked: boolean) => {
     setIsLoading(true)
@@ -96,11 +113,41 @@ export default function SecurityClient({ initialGoogleLoginEnabled, initialMaint
     setIsLoading(false)
   }
 
-  const handleSaveDomains = () => {
+  const handleAddDomain = () => {
+    const newDomain = domainInput.trim().toLowerCase()
+    if (!newDomain) return
+    
+    const list = allowedDomains.split(',').map(d => d.trim().toLowerCase()).filter(Boolean)
+    if (list.includes(newDomain)) {
+      setDomainInput('')
+      return
+    }
+    
+    list.push(newDomain)
+    const newList = list.join(', ')
+    setAllowedDomains(newList)
+    setDomainInput('')
+    
     startTransition(async () => {
-      const res = await updateAllowedDomains(allowedDomains)
+      const res = await updateAllowedDomains(newList)
       if (res.success) {
-        toast.success('Đã cập nhật danh sách tên miền')
+        toast.success('Đã thêm tên miền')
+      } else {
+        toast.error(res.error || 'Có lỗi xảy ra')
+      }
+    })
+  }
+
+  const handleRemoveDomain = (domainToRemove: string) => {
+    const list = allowedDomains.split(',').map(d => d.trim().toLowerCase()).filter(Boolean)
+    const filtered = list.filter(d => d !== domainToRemove)
+    const newList = filtered.join(', ')
+    setAllowedDomains(newList)
+    
+    startTransition(async () => {
+      const res = await updateAllowedDomains(newList)
+      if (res.success) {
+        toast.success('Đã xóa tên miền')
       } else {
         toast.error(res.error || 'Có lỗi xảy ra')
       }
@@ -157,17 +204,18 @@ export default function SecurityClient({ initialGoogleLoginEnabled, initialMaint
             <CardContent className="pt-0">
               <div className="flex gap-2 items-center">
                 <Input 
-                  value={allowedDomains}
-                  onChange={(e) => setAllowedDomains(e.target.value)}
-                  placeholder="Nhập tên miền, ví dụ: traiheo.vn, dalymmo.com" 
+                  value={domainInput}
+                  onChange={(e) => setDomainInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddDomain() }}
+                  placeholder="Nhập tên miền (vd: traiheo.vn)" 
                   className="flex-1"
                 />
                 <Button 
-                  onClick={handleSaveDomains} 
-                  disabled={isPending || allowedDomains === initialAllowedDomains}
+                  onClick={handleAddDomain} 
+                  disabled={isPending || !domainInput.trim()}
                   variant="default"
                 >
-                  {isPending ? 'Đang lưu...' : 'Lưu tên miền'}
+                  {isPending ? 'Đang lưu...' : 'Thêm miền'}
                 </Button>
               </div>
 
@@ -180,6 +228,13 @@ export default function SecurityClient({ initialGoogleLoginEnabled, initialMaint
                       <div key={index} className="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-sm font-medium flex items-center gap-1.5">
                         <GlobeLock className="w-3.5 h-3.5" />
                         {cleanDomain}
+                        <button 
+                          onClick={() => handleRemoveDomain(cleanDomain)}
+                          disabled={isPending}
+                          className="ml-1 hover:bg-primary/20 rounded-full p-0.5 transition-colors disabled:opacity-50"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     )
                   })}

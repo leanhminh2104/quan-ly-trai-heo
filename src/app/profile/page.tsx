@@ -4,10 +4,10 @@ export default function Profile() {
       <section className="mb-8">
         <img
           src="https://avatars.githubusercontent.com/leanhminh2104"
-          alt="Lê Anh Minh GitHub Avatar"
+          alt="Lï¿½ Anh Minh GitHub Avatar"
           className="w-24 h-24 rounded-full mx-auto mb-4"
         />
-        <h1 className="text-3xl font-bold mb-2">Lê Anh Minh</h1>
+        <h1 className="text-3xl font-bold mb-2">Lï¿½ Anh Minh</h1>
         <p className="text-muted-foreground max-w-md mx-auto">
           Passionate software developer with interests across modern web stacks and continuous learning.
         </p>
@@ -106,4 +106,4 @@ export default function Profile() {
       </section>
     </main>
   );
-}
+}

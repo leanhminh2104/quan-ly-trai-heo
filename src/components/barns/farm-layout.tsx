@@ -1227,8 +1227,8 @@ export function FarmLayout({
 
                   {/* ── Hậu Bị 16 & 17 ── */}
                   <div className="flex gap-4" style={{ width: '30%' }}>
-                    <HauBiRow number={16} count={17} allPens={allPens} />
-                    <HauBiRow number={17} count={16} allPens={allPens} />
+                    <HauBiRow number={16} count={16} allPens={allPens} />
+                    <HauBiRow number={17} count={17} allPens={allPens} />
                   </div>
 
                   {/* ── Center: Biogas + Pens 4-7 ── */}
