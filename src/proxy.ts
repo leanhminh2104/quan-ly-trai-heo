@@ -38,6 +38,48 @@ export default async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // --- BẮT ĐẦU: KIỂM TRA DOMAIN WHITELIST ---
+  const host = request.headers.get('host') || ''
+  const domain = host.split(':')[0].toLowerCase() // Lấy domain (bỏ port nếu có)
+
+  // Bỏ qua kiểm tra cho các đường dẫn tĩnh, mặc dù matcher đã chặn rồi
+  // Khởi tạo Supabase Admin client để query SystemParameter không bị vướng RLS
+  const supabaseAdmin = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      cookies: {
+        getAll() { return [] },
+        setAll() {},
+      },
+    }
+  )
+
+  const { data: allowedDomainsParam } = await supabaseAdmin
+    .from('SystemParameter')
+    .select('value')
+    .eq('key', 'ALLOWED_DOMAINS')
+    .limit(1)
+
+  if (allowedDomainsParam && allowedDomainsParam.length > 0 && allowedDomainsParam[0].value) {
+    // Tách chuỗi bằng dấu phẩy và làm sạch
+    const allowedList = allowedDomainsParam[0].value
+      .split(',')
+      .map((d: string) => d.trim().toLowerCase())
+      .filter(Boolean)
+
+    if (allowedList.length > 0) {
+      // Nếu không có tên miền nào khớp với danh sách cho phép
+      if (!allowedList.includes(domain)) {
+        return new NextResponse(
+          `<!DOCTYPE html><html><head><title>403 Forbidden</title><meta charset="utf-8"></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f87171;color:white;text-align:center;"><div><h1 style="font-size:3rem;margin-bottom:0.5rem">403 Forbidden</h1><p>Tên miền truy cập (<b>${domain}</b>) chưa được cấp phép truy cập vào hệ thống này.</p></div></body></html>`,
+          { status: 403, headers: { 'content-type': 'text/html' } }
+        )
+      }
+    }
+  }
+  // --- KẾT THÚC: KIỂM TRA DOMAIN WHITELIST ---
+
   // Protected routes - redirect to login if not authenticated
   const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') ||
     request.nextUrl.pathname.startsWith('/barns') ||

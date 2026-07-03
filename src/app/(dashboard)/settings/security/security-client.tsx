@@ -1,28 +1,33 @@
 // Bản quyền thuộc dalymmo.com
 'use client'
 
-import { useState } from 'react'
-import { updateGoogleLoginStatus, updateSystemParameter, updateEmailLoginStatus } from '@/actions/security'
+import { useState, useTransition } from 'react'
+import { updateGoogleLoginStatus, updateSystemParameter, updateEmailLoginStatus, updateAllowedDomains } from '@/actions/security'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/page-header'
 import { CyberSwitch } from '@/components/ui/cyber-switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ShieldCheck, Mail, Info, ExternalLink, Wrench, UserCheck } from 'lucide-react'
+import { ShieldCheck, Mail, Info, ExternalLink, Wrench, UserCheck, GlobeLock } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 interface Props {
   initialGoogleLoginEnabled: boolean
   initialMaintenanceMode: boolean
   initialAutoActivate: boolean
   initialEmailLoginEnabled: boolean
+  initialAllowedDomains: string
 }
 
-export default function SecurityClient({ initialGoogleLoginEnabled, initialMaintenanceMode, initialAutoActivate, initialEmailLoginEnabled }: Props) {
+export default function SecurityClient({ initialGoogleLoginEnabled, initialMaintenanceMode, initialAutoActivate, initialEmailLoginEnabled, initialAllowedDomains }: Props) {
   const [googleLoginEnabled, setGoogleLoginEnabled] = useState(initialGoogleLoginEnabled)
   const [emailLoginEnabled, setEmailLoginEnabled] = useState(initialEmailLoginEnabled)
   const [maintenanceMode, setMaintenanceMode] = useState(initialMaintenanceMode)
   const [autoActivate, setAutoActivate] = useState(initialAutoActivate)
+  const [allowedDomains, setAllowedDomains] = useState(initialAllowedDomains)
   const [isLoading, setIsLoading] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   const handleToggleGoogleLogin = async (checked: boolean) => {
     setIsLoading(true)
@@ -76,6 +81,17 @@ export default function SecurityClient({ initialGoogleLoginEnabled, initialMaint
     setIsLoading(false)
   }
 
+  const handleSaveDomains = () => {
+    startTransition(async () => {
+      const res = await updateAllowedDomains(allowedDomains)
+      if (res.success) {
+        toast.success('Đã cập nhật danh sách tên miền')
+      } else {
+        toast.error(res.error || 'Có lỗi xảy ra')
+      }
+    })
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -101,6 +117,42 @@ export default function SecurityClient({ initialGoogleLoginEnabled, initialMaint
               onCheckedChange={handleToggleMaintenance}
               className="data-[state=checked]:bg-red-600"
             />
+          </CardHeader>
+        </Card>
+
+        <Card className="border-red-200 dark:border-red-900/50">
+          <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-4">
+            <div className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-500 rounded-lg mt-1">
+              <GlobeLock className="w-6 h-6" />
+            </div>
+            <div className="flex-1 space-y-2">
+              <CardTitle className="text-base text-red-600 dark:text-red-500">Khóa Tên Miền (Domain Whitelist)</CardTitle>
+              <CardDescription>
+                Chỉ cho phép truy cập từ các tên miền cụ thể. Ngăn chặn bị "chôm" tên miền từ người khác. Phân cách bằng dấu phẩy (Ví dụ: <code className="text-xs bg-muted px-1 rounded">traiheo.vn, dalymmo.com</code>). Bỏ trống để cho phép mọi tên miền.
+              </CardDescription>
+              <div className="flex gap-2 items-center mt-2">
+                <Input 
+                  value={allowedDomains}
+                  onChange={(e) => setAllowedDomains(e.target.value)}
+                  placeholder="traiheo.vn, dalymmo.com" 
+                  className="flex-1"
+                />
+                <Button 
+                  onClick={handleSaveDomains} 
+                  disabled={isPending || allowedDomains === initialAllowedDomains}
+                  variant="destructive"
+                >
+                  {isPending ? 'Đang lưu...' : 'Lưu tên miền'}
+                </Button>
+              </div>
+              <Alert className="bg-red-50 text-red-800 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/50 mt-4">
+                <Info className="h-4 w-4" />
+                <AlertTitle className="text-xs font-semibold">Cảnh báo cực kỳ quan trọng</AlertTitle>
+                <AlertDescription className="text-xs mt-1">
+                  Nếu bạn cấu hình sai hoặc quên điền tên miền đang dùng, <b>chính bạn sẽ bị khóa khỏi hệ thống</b>. Hãy chắc chắn đã điền đúng tên miền hiện tại (vd: <code className="bg-background px-1 rounded font-mono">localhost</code>).
+                </AlertDescription>
+              </Alert>
+            </div>
           </CardHeader>
         </Card>
 

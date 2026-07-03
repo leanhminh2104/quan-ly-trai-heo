@@ -102,3 +102,57 @@ export async function getEmailLoginStatus(farmId?: string) {
 export async function updateEmailLoginStatus(enabled: boolean) {
   return updateSystemParameter('EMAIL_LOGIN_ENABLED', enabled, 'Cho phép đăng nhập bằng tài khoản Email/Mật khẩu')
 }
+
+export async function getAllowedDomains(farmId?: string) {
+  try {
+    let targetFarmId = farmId
+    if (!targetFarmId) {
+      const firstFarm = await prisma.farm.findFirst()
+      if (!firstFarm) return ''
+      targetFarmId = firstFarm.id
+    }
+    const param = await prisma.systemParameter.findUnique({
+      where: { farmId_key: { farmId: targetFarmId, key: 'ALLOWED_DOMAINS' } }
+    })
+    return param?.value || ''
+  } catch (error) {
+    console.error(`Error fetching ALLOWED_DOMAINS:`, error)
+    return ''
+  }
+}
+
+export async function updateAllowedDomains(domains: string) {
+  try {
+    const user = await getCurrentUser()
+    if (!user || !user.farmId) {
+      return { success: false, error: 'Chưa đăng nhập hoặc không thuộc trang trại nào' }
+    }
+
+    if (user.role !== 'OWNER' && user.role !== 'MANAGER') {
+      return { success: false, error: 'Bạn không có quyền thay đổi cài đặt này' }
+    }
+
+    await prisma.systemParameter.upsert({
+      where: {
+        farmId_key: {
+          farmId: user.farmId,
+          key: 'ALLOWED_DOMAINS',
+        }
+      },
+      update: {
+        value: domains,
+      },
+      create: {
+        farmId: user.farmId,
+        key: 'ALLOWED_DOMAINS',
+        value: domains,
+        description: 'Danh sách các tên miền được phép truy cập, phân cách bằng dấu phẩy',
+      }
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error(`Error updating ALLOWED_DOMAINS:`, error)
+    return { success: false, error: 'Lỗi khi cập nhật danh sách tên miền' }
+  }
+}

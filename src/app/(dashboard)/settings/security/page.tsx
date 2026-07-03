@@ -1,7 +1,7 @@
 // Bản quyền thuộc dalymmo.com
 import { Metadata } from 'next'
 import SecurityClient from './security-client'
-import { getGoogleLoginStatus, getSystemParameter, getEmailLoginStatus } from '@/actions/security'
+import { getGoogleLoginStatus, getSystemParameter, getEmailLoginStatus, getAllowedDomains } from '@/actions/security'
 
 export const metadata: Metadata = {
   title: 'Xác thực & Bảo mật | PFMS',
@@ -13,6 +13,7 @@ export default async function SecurityPage() {
   const isMaintenanceMode = await getSystemParameter('MAINTENANCE_MODE')
   const isAutoActivate = await getSystemParameter('AUTO_ACTIVATE_ACCOUNT')
   const isEmailLoginEnabled = await getEmailLoginStatus()
+  const allowedDomains = await getAllowedDomains()
   
   return (
     <SecurityClient 
@@ -20,6 +21,7 @@ export default async function SecurityPage() {
       initialMaintenanceMode={isMaintenanceMode}
       initialAutoActivate={isAutoActivate}
       initialEmailLoginEnabled={isEmailLoginEnabled}
+      initialAllowedDomains={allowedDomains}
     />
   )
 }
