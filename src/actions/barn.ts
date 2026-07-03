@@ -276,7 +276,7 @@ export async function getBarnHierarchy() {
                         type: true,
                         gender: true,
                       },
-                      orderBy: { code: 'asc' },
+                      orderBy: { earTag: 'asc' },
                     },
                     _count: {
                       select: { pigs: { where: { deletedAt: null } } }
@@ -321,7 +321,7 @@ export async function getUnassignedPigs() {
         type: true,
         gender: true,
       },
-      orderBy: { code: 'asc' },
+      orderBy: { earTag: 'asc' },
     })
 
     return { success: true, data: pigs }
