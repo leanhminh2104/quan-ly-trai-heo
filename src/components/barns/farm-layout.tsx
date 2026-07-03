@@ -44,9 +44,20 @@ import {
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
-const LayoutContext = React.createContext<{ isLocked: boolean; setIsLocked: (val: boolean) => void }>({
+const LayoutContext = React.createContext<{ 
+  isLocked: boolean; 
+  setIsLocked: (val: boolean) => void;
+  movingPig: DragItem | null;
+  setMovingPig: (val: DragItem | null) => void;
+  onPenClick: (penId: string | null, layoutCode: string, penName: string) => void;
+  onPigClick: (pig: PigData, penId: string | null, penName: string) => void;
+}>({
   isLocked: true,
   setIsLocked: () => {},
+  movingPig: null,
+  setMovingPig: () => {},
+  onPenClick: () => {},
+  onPigClick: () => {},
 })
 
 // ═══════════════════════════════════════════
@@ -211,7 +222,7 @@ function DraggablePig({
   penName: string
   size?: 'sm' | 'md'
 }) {
-  const { isLocked } = React.useContext(LayoutContext)
+  const { isLocked, onPigClick, movingPig } = React.useContext(LayoutContext)
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `pig-${pig.id}`,
     data: { pig, fromPenId: penId, fromPenName: penName } as DragItem,
@@ -227,6 +238,10 @@ function DraggablePig({
         {...attributes}
         {...listeners}
         data-pig="true"
+        onClick={(e) => {
+          e.stopPropagation()
+          onPigClick(pig, penId, penName)
+        }}
         title={`${pig.earTag || pig.code}${pig.name ? ` - ${pig.name}` : ''} (${PIG_STATUS_LABELS[pig.status] || pig.status})`}
         className={cn(
           'inline-flex items-center gap-1.5 px-2 py-1 rounded-lg',
@@ -252,6 +267,10 @@ function DraggablePig({
       {...attributes}
       {...listeners}
       data-pig="true"
+      onClick={(e) => {
+        e.stopPropagation()
+        onPigClick(pig, penId, penName)
+      }}
       title={`${pig.earTag || pig.code}${pig.name ? ` - ${pig.name}` : ''} (${pig.status})`}
       className={cn(
         'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md',
@@ -323,7 +342,7 @@ function DroppablePen({
   compact = false,
   style,
 }: DroppablePenProps) {
-  const { isLocked } = React.useContext(LayoutContext)
+  const { isLocked, movingPig, onPenClick } = React.useContext(LayoutContext)
   const { isOver, setNodeRef } = useDroppable({
     id: `pen-${pen?.id || `layout-${layoutCode}`}`,
     data: { pen, layoutCode, label: defaultPenName || label || layoutCode },
@@ -339,12 +358,14 @@ function DroppablePen({
     <div
       ref={setNodeRef}
       style={style}
+      onClick={() => onPenClick(pen?.id || null, layoutCode, displayLabel)}
       className={cn(
-        'rounded-lg border-2 flex flex-col overflow-hidden transition-all duration-200',
+        'rounded-lg border-2 flex flex-col overflow-hidden transition-all duration-200 cursor-pointer',
         styles.base,
         !isLocked && isOver && pen && !isFull && 'ring-2 ring-emerald-400 ring-offset-1 ring-offset-gray-700 scale-[1.03] shadow-lg shadow-emerald-500/20 border-emerald-400 z-10',
         !isLocked && isOver && isFull && 'ring-2 ring-red-400 ring-offset-1 ring-offset-gray-700 border-red-400',
-        !pen && 'opacity-35 border-dashed cursor-not-allowed',
+        movingPig && 'ring-2 ring-amber-400 ring-offset-1 ring-offset-gray-700 scale-[1.02] shadow-md shadow-amber-500/20 z-10 hover:bg-amber-100/10',
+        !pen && 'opacity-35 border-dashed',
         className
       )}
     >
@@ -616,7 +637,7 @@ function ZoomPanContainer({ children, overlay, bottomPanel }: { children: React.
   const [translate, setTranslate] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const panStart = useRef({ x: 0, y: 0, tx: 0, ty: 0 })
+  const panStart = useRef({ x: 0, y: 0, tx: 0, ty: 0, dist: 1, scale: 1 })
   const containerRef = useRef<HTMLDivElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
@@ -644,6 +665,54 @@ function ZoomPanContainer({ children, overlay, bottomPanel }: { children: React.
   }, [isPanning])
 
   const handleMouseUp = useCallback(() => {
+    setIsPanning(false)
+  }, [])
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const isPig = (e.target as HTMLElement).closest('[data-pig="true"]')
+    if (isPig) return // Let pig handle its click
+
+    if (e.touches.length === 2) {
+      setIsPanning(true)
+      const touch1 = e.touches[0]
+      const touch2 = e.touches[1]
+      
+      const centerX = (touch1.clientX + touch2.clientX) / 2
+      const centerY = (touch1.clientY + touch2.clientY) / 2
+      const dist = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY)
+
+      panStart.current = { 
+        x: centerX, 
+        y: centerY, 
+        tx: translate.x, 
+        ty: translate.y,
+        dist: dist,
+        scale: scale
+      }
+    }
+  }, [translate, scale])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isPanning || e.touches.length !== 2) return
+    
+    const touch1 = e.touches[0]
+    const touch2 = e.touches[1]
+    
+    const centerX = (touch1.clientX + touch2.clientX) / 2
+    const centerY = (touch1.clientY + touch2.clientY) / 2
+    const dist = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY)
+
+    const dx = centerX - panStart.current.x
+    const dy = centerY - panStart.current.y
+    
+    const scaleDiff = dist / panStart.current.dist
+    const newScale = Math.min(2, Math.max(0.4, panStart.current.scale * scaleDiff))
+
+    setTranslate({ x: panStart.current.tx + dx, y: panStart.current.ty + dy })
+    setScale(newScale)
+  }, [isPanning])
+
+  const handleTouchEnd = useCallback(() => {
     setIsPanning(false)
   }, [])
 
@@ -740,6 +809,10 @@ function ZoomPanContainer({ children, overlay, bottomPanel }: { children: React.
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ touchAction: 'none' }}
         className={cn(
           'flex-1 overflow-hidden rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900/50',
           isPanning ? 'cursor-grabbing' : 'cursor-grab'
@@ -785,6 +858,12 @@ export function FarmLayout({
   const [isMoving, setIsMoving] = useState(false)
   const [isLocked, setIsLocked] = useState(true)
 
+  // Touch UI States
+  const [movingPig, setMovingPig] = useState<DragItem | null>(null)
+  const [pigMenuOpen, setPigMenuOpen] = useState(false)
+  const [selectedPigInfo, setSelectedPigInfo] = useState<DragItem | null>(null)
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
+
   // ── Data Maps ──
   const { allPens, allBarns } = useMemo(
     () => buildDataMaps(initialData),
@@ -821,6 +900,31 @@ export function FarmLayout({
       activationConstraint: { delay: 250, tolerance: 5 },
     })
   )
+
+  const handlePigClick = useCallback((pig: PigData, penId: string | null, penName: string) => {
+    setSelectedPigInfo({ pig, fromPenId: penId, fromPenName: penName })
+    setPigMenuOpen(true)
+  }, [])
+
+  const handlePenClick = useCallback((penId: string | null, layoutCode: string, penName: string) => {
+    if (!movingPig) return
+
+    if (penId === movingPig.fromPenId && penId !== null) {
+      setMovingPig(null)
+      toast.info('Đã hủy chuyển ô', { description: 'Lợn đang ở ô này rồi.' })
+      return
+    }
+
+    setPendingMove({
+      pig: movingPig.pig,
+      fromPenId: movingPig.fromPenId,
+      fromPenName: movingPig.fromPenName,
+      toPenId: penId || undefined,
+      toLayoutCode: layoutCode,
+      toPenName: penName,
+    })
+    setMovingPig(null)
+  }, [movingPig])
 
   // ── DnD Handlers ──
   const handleDragStart = useCallback((event: DragStartEvent) => {
@@ -961,8 +1065,79 @@ export function FarmLayout({
     </div>
   ) : null
 
+  const pigMenuOverlay = (
+    <Dialog open={pigMenuOpen} onOpenChange={setPigMenuOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Lợn: {selectedPigInfo?.pig.code}</DialogTitle>
+          <DialogDescription>
+            Ô hiện tại: {selectedPigInfo?.fromPenName || 'Chưa phân ô'}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-3 py-4">
+          <Button 
+            className="w-full justify-start gap-3 h-12 bg-emerald-600 hover:bg-emerald-700 text-white" 
+            onClick={() => { 
+              setMovingPig(selectedPigInfo); 
+              setPigMenuOpen(false); 
+              toast('Vui lòng chọn ô chuồng để chuyển đến');
+            }}
+          >
+            <MoveRight className="w-5 h-5" />
+            Di chuyển sang ô khác
+          </Button>
+          <Button 
+            variant="outline" 
+            className="w-full justify-start gap-3 h-12"
+            onClick={() => { 
+              setDetailsDialogOpen(true);
+              setPigMenuOpen(false);
+            }}
+          >
+            <Search className="w-5 h-5" />
+            Xem thông tin chi tiết
+          </Button>
+          <Button 
+            variant="outline" 
+            className="w-full justify-start gap-3 h-12"
+            onClick={() => { 
+              setDetailsDialogOpen(true);
+              setPigMenuOpen(false);
+            }}
+          >
+            <RotateCcw className="w-5 h-5" />
+            Ghi nhật ký
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+
+  const detailsOverlay = (
+    <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Thông tin lợn {selectedPigInfo?.pig.code}</DialogTitle>
+          <DialogDescription>
+            Chi tiết và nhật ký hoạt động
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-6 text-center text-muted-foreground border-2 border-dashed rounded-xl mt-2">
+          <p className="font-medium mb-2">Tính năng đang được phát triển</p>
+          <p className="text-sm">Giao diện chi tiết và ghi chú cho từng con sẽ được cập nhật ở phiên bản sau.</p>
+        </div>
+        <DialogFooter>
+          <Button onClick={() => setDetailsDialogOpen(false)}>Đóng</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+
   return (
-    <LayoutContext.Provider value={{ isLocked, setIsLocked }}>
+    <LayoutContext.Provider value={{ isLocked, setIsLocked, movingPig, setMovingPig, onPenClick: handlePenClick, onPigClick: handlePigClick }}>
+      {pigMenuOverlay}
+      {detailsOverlay}
+      
       {/* ── HEADER INFO ── */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -1017,7 +1192,7 @@ export function FarmLayout({
         </div>
       </div>
 
-      {/* ── FARM LAYOUT ── */}
+      </div>
 
       {/* ── FARM LAYOUT ── */}
       <DndContext
@@ -1026,7 +1201,20 @@ export function FarmLayout({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-col rounded-2xl overflow-hidden shadow-2xl border border-gray-300 dark:border-gray-700">
+        <div className="flex flex-col rounded-2xl overflow-hidden shadow-2xl border border-gray-300 dark:border-gray-700 relative">
+          
+          {movingPig && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-amber-500 text-white px-5 py-2.5 rounded-full shadow-lg border-2 border-white flex items-center gap-4 text-sm font-medium animate-in slide-in-from-top-4">
+              <span>Đang chọn ô đích cho lợn <b>{movingPig.pig.code}</b>...</span>
+              <button 
+                onClick={() => setMovingPig(null)} 
+                className="bg-amber-700 hover:bg-amber-800 px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+              >
+                Hủy
+              </button>
+            </div>
+          )}
+
           {/* Map Area with Zoom/Pan */}
           <ZoomPanContainer 
             overlay={confirmOverlay}

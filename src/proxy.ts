@@ -55,15 +55,17 @@ export default async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: allowedDomainsParam } = await supabaseAdmin
+  const { data: systemParams } = await supabaseAdmin
     .from('SystemParameter')
-    .select('value')
-    .eq('key', 'ALLOWED_DOMAINS')
-    .limit(1)
+    .select('key, value')
+    .in('key', ['ALLOWED_DOMAINS', 'DOMAIN_WHITELIST_ENABLED'])
 
-  if (allowedDomainsParam && allowedDomainsParam.length > 0 && allowedDomainsParam[0].value) {
+  const isWhitelistEnabled = systemParams?.find(p => p.key === 'DOMAIN_WHITELIST_ENABLED')?.value === 'true'
+  const allowedDomainsStr = systemParams?.find(p => p.key === 'ALLOWED_DOMAINS')?.value || ''
+
+  if (isWhitelistEnabled && allowedDomainsStr) {
     // Tách chuỗi bằng dấu phẩy và làm sạch
-    const allowedList = allowedDomainsParam[0].value
+    const allowedList = allowedDomainsStr
       .split(',')
       .map((d: string) => d.trim().toLowerCase())
       .filter(Boolean)

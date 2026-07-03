@@ -1,7 +1,7 @@
 // Bản quyền thuộc dalymmo.com
 import { Metadata } from 'next'
 import SecurityClient from './security-client'
-import { getGoogleLoginStatus, getSystemParameter, getEmailLoginStatus, getAllowedDomains } from '@/actions/security'
+import { getGoogleLoginStatus, getSystemParameter, getEmailLoginStatus, getAllowedDomains, getDomainWhitelistStatus } from '@/actions/security'
 
 export const metadata: Metadata = {
   title: 'Xác thực & Bảo mật | PFMS',
@@ -9,19 +9,23 @@ export const metadata: Metadata = {
 }
 
 export default async function SecurityPage() {
-  const isGoogleLoginEnabled = await getGoogleLoginStatus()
-  const isMaintenanceMode = await getSystemParameter('MAINTENANCE_MODE')
-  const isAutoActivate = await getSystemParameter('AUTO_ACTIVATE_ACCOUNT')
-  const isEmailLoginEnabled = await getEmailLoginStatus()
-  const allowedDomains = await getAllowedDomains()
-  
+  const [googleLoginEnabled, maintenanceMode, autoActivate, emailLoginEnabled, allowedDomains, domainWhitelistEnabled] = await Promise.all([
+    getGoogleLoginStatus(),
+    getSystemParameter('MAINTENANCE_MODE'),
+    getSystemParameter('AUTO_ACTIVATE_ACCOUNT'),
+    getEmailLoginStatus(),
+    getAllowedDomains(),
+    getDomainWhitelistStatus(),
+  ])
+
   return (
-    <SecurityClient 
-      initialGoogleLoginEnabled={isGoogleLoginEnabled} 
-      initialMaintenanceMode={isMaintenanceMode}
-      initialAutoActivate={isAutoActivate}
-      initialEmailLoginEnabled={isEmailLoginEnabled}
+    <SecurityClient
+      initialGoogleLoginEnabled={googleLoginEnabled}
+      initialMaintenanceMode={maintenanceMode}
+      initialAutoActivate={autoActivate}
+      initialEmailLoginEnabled={emailLoginEnabled}
       initialAllowedDomains={allowedDomains}
+      initialDomainWhitelistEnabled={domainWhitelistEnabled}
     />
   )
 }

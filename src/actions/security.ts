@@ -150,9 +150,33 @@ export async function updateAllowedDomains(domains: string) {
       }
     })
 
+    revalidatePath('/')
+    revalidatePath('/settings/security')
+    
     return { success: true }
   } catch (error) {
     console.error(`Error updating ALLOWED_DOMAINS:`, error)
     return { success: false, error: 'Lỗi khi cập nhật danh sách tên miền' }
   }
+}
+
+export async function getDomainWhitelistStatus(farmId?: string) {
+  try {
+    let targetFarmId = farmId
+    if (!targetFarmId) {
+      const firstFarm = await prisma.farm.findFirst()
+      if (!firstFarm) return false
+      targetFarmId = firstFarm.id
+    }
+    const param = await prisma.systemParameter.findUnique({
+      where: { farmId_key: { farmId: targetFarmId, key: 'DOMAIN_WHITELIST_ENABLED' } }
+    })
+    return param?.value === 'true'
+  } catch (error) {
+    return false
+  }
+}
+
+export async function updateDomainWhitelistStatus(enabled: boolean) {
+  return updateSystemParameter('DOMAIN_WHITELIST_ENABLED', enabled, 'Bật/tắt tính năng khóa tên miền')
 }

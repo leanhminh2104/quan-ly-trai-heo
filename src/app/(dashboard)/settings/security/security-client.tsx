@@ -18,16 +18,31 @@ interface Props {
   initialAutoActivate: boolean
   initialEmailLoginEnabled: boolean
   initialAllowedDomains: string
+  initialDomainWhitelistEnabled: boolean
 }
 
-export default function SecurityClient({ initialGoogleLoginEnabled, initialMaintenanceMode, initialAutoActivate, initialEmailLoginEnabled, initialAllowedDomains }: Props) {
+export default function SecurityClient({ initialGoogleLoginEnabled, initialMaintenanceMode, initialAutoActivate, initialEmailLoginEnabled, initialAllowedDomains, initialDomainWhitelistEnabled }: Props) {
   const [googleLoginEnabled, setGoogleLoginEnabled] = useState(initialGoogleLoginEnabled)
   const [emailLoginEnabled, setEmailLoginEnabled] = useState(initialEmailLoginEnabled)
   const [maintenanceMode, setMaintenanceMode] = useState(initialMaintenanceMode)
   const [autoActivate, setAutoActivate] = useState(initialAutoActivate)
+  const [domainWhitelistEnabled, setDomainWhitelistEnabled] = useState(initialDomainWhitelistEnabled)
   const [allowedDomains, setAllowedDomains] = useState(initialAllowedDomains)
   const [isLoading, setIsLoading] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  const handleToggleDomainWhitelist = async (checked: boolean) => {
+    setIsLoading(true)
+    const res = await updateSystemParameter('DOMAIN_WHITELIST_ENABLED', checked, 'Bật/tắt tính năng khóa tên miền')
+    if (res.success) {
+      setDomainWhitelistEnabled(checked)
+      toast.success(checked ? 'Đã BẬT Khóa Tên Miền' : 'Đã TẮT Khóa Tên Miền')
+    } else {
+      toast.error(res.error || 'Có lỗi xảy ra')
+      setDomainWhitelistEnabled(!checked)
+    }
+    setIsLoading(false)
+  }
 
   const handleToggleGoogleLogin = async (checked: boolean) => {
     setIsLoading(true)
@@ -130,21 +145,47 @@ export default function SecurityClient({ initialGoogleLoginEnabled, initialMaint
               <CardDescription>
                 Chỉ cho phép truy cập từ các tên miền cụ thể. Ngăn chặn bị "chôm" tên miền từ người khác. Phân cách bằng dấu phẩy (Ví dụ: <code className="text-xs bg-muted px-1 rounded">traiheo.vn, dalymmo.com</code>). Bỏ trống để cho phép mọi tên miền.
               </CardDescription>
-              <div className="flex gap-2 items-center mt-2">
+            </div>
+            <CyberSwitch
+              checked={domainWhitelistEnabled}
+              disabled={isLoading}
+              onCheckedChange={handleToggleDomainWhitelist}
+            />
+          </CardHeader>
+          
+          {domainWhitelistEnabled && (
+            <CardContent className="pt-0">
+              <div className="flex gap-2 items-center">
                 <Input 
                   value={allowedDomains}
                   onChange={(e) => setAllowedDomains(e.target.value)}
-                  placeholder="traiheo.vn, dalymmo.com" 
+                  placeholder="Nhập tên miền, ví dụ: traiheo.vn, dalymmo.com" 
                   className="flex-1"
                 />
                 <Button 
                   onClick={handleSaveDomains} 
                   disabled={isPending || allowedDomains === initialAllowedDomains}
-                  variant="destructive"
+                  variant="default"
                 >
                   {isPending ? 'Đang lưu...' : 'Lưu tên miền'}
                 </Button>
               </div>
+
+              {allowedDomains.trim().length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {allowedDomains.split(',').map((domain, index) => {
+                    const cleanDomain = domain.trim().toLowerCase()
+                    if (!cleanDomain) return null
+                    return (
+                      <div key={index} className="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-sm font-medium flex items-center gap-1.5">
+                        <GlobeLock className="w-3.5 h-3.5" />
+                        {cleanDomain}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
               <Alert className="bg-red-50 text-red-800 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/50 mt-4">
                 <Info className="h-4 w-4" />
                 <AlertTitle className="text-xs font-semibold">Cảnh báo cực kỳ quan trọng</AlertTitle>
@@ -152,8 +193,8 @@ export default function SecurityClient({ initialGoogleLoginEnabled, initialMaint
                   Nếu bạn cấu hình sai hoặc quên điền tên miền đang dùng, <b>chính bạn sẽ bị khóa khỏi hệ thống</b>. Hãy chắc chắn đã điền đúng tên miền hiện tại (vd: <code className="bg-background px-1 rounded font-mono">localhost</code>).
                 </AlertDescription>
               </Alert>
-            </div>
-          </CardHeader>
+            </CardContent>
+          )}
         </Card>
 
         <Card>
