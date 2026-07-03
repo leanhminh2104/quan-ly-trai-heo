@@ -28,6 +28,8 @@ export default function FatteningPage() {
     search: search || undefined,
     type: 'FATTENING',
     status,
+    sortBy: 'earTag',
+    sortOrder: 'asc',
   })
 
   const { mutate: deletePig, isPending: isDeleting } = useDeletePig()

@@ -28,6 +28,8 @@ export default function GiltsPage() {
     search: search || undefined,
     type: 'GILT',
     status,
+    sortBy: 'earTag',
+    sortOrder: 'asc',
   })
 
   const { mutate: deletePig, isPending: isDeleting } = useDeletePig()

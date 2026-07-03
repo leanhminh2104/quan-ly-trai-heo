@@ -28,6 +28,8 @@ export default function PigletsPage() {
     search: search || undefined,
     type: 'PIGLET',
     status,
+    sortBy: 'earTag',
+    sortOrder: 'asc',
   })
 
   const { mutate: deletePig, isPending: isDeleting } = useDeletePig()

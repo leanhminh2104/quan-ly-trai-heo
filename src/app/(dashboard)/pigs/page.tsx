@@ -32,6 +32,8 @@ export default function PigsPage() {
     type,
     status,
     gender,
+    sortBy: 'earTag',
+    sortOrder: 'asc',
   })
 
   const { mutate: deletePig, isPending: isDeleting } = useDeletePig()

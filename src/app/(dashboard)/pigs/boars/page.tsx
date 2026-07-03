@@ -28,6 +28,8 @@ export default function BoarsPage() {
     search: search || undefined,
     type: 'BOAR',
     status,
+    sortBy: 'earTag',
+    sortOrder: 'asc',
   })
 
   const { mutate: deletePig, isPending: isDeleting } = useDeletePig()
