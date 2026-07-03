@@ -1,0 +1,1204 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Farm {
+  id               String            @id @default(cuid())
+  name             String
+  code             String            @unique
+  address          String?
+  phone            String?
+  email            String?
+  logo             String?
+  description      String?
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+  auditLogs        AuditLog[]
+  barnZones        BarnZone[]
+  breeds           Breed[]
+  categories       Category[]
+  employees        Employee[]
+  expenses         Expense[]
+  members          FarmMember[]
+  farrowings       Farrowing[]
+  feedStocks       FeedStock[]
+  feedTypes        FeedType[]
+  incomes          Income[]
+  matings          Mating[]
+  medicineStocks   MedicineStock[]
+  medicineTypes    MedicineType[]
+  notifications    Notification[]
+  pigs             Pig[]
+  semenStocks      SemenStock[]
+  suppliers        Supplier[]
+  supplyStocks     SupplyStock[]
+  supplyTypes      SupplyType[]
+  systemParameters SystemParameter[]
+  tasks            Task[]
+  units            Unit[]
+  vaccineStocks    VaccineStock[]
+  vaccineTypes     VaccineType[]
+  feedTransactions FeedTransaction[]
+  feedConsumptions FeedConsumption[]
+  penCleanings     PenCleaning[]
+
+  @@index([code])
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String?
+  phone       String?
+  avatar      String?
+  supabaseId  String       @unique
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  auditLogs   AuditLog[]
+  memberships FarmMember[]
+  notifications Notification[]
+
+  @@index([email])
+  @@index([supabaseId])
+}
+
+model FarmMember {
+  id        String   @id @default(cuid())
+  farmId    String
+  userId    String
+  role      UserRole @default(VIEWER)
+  isActive  Boolean  @default(true)
+  joinedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  farm      Farm     @relation(fields: [farmId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([farmId, userId])
+  @@index([farmId])
+  @@index([userId])
+}
+
+model BarnZone {
+  id          String    @id @default(cuid())
+  farmId      String
+  name        String
+  code        String
+  description String?
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+  rows        BarnRow[]
+  farm        Farm      @relation(fields: [farmId], references: [id])
+
+  @@unique([farmId, code])
+  @@index([farmId])
+}
+
+model BarnRow {
+  id        String    @id @default(cuid())
+  zoneId    String
+  name      String
+  code      String
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  barns     Barn[]
+  zone      BarnZone  @relation(fields: [zoneId], references: [id])
+
+  @@index([zoneId])
+}
+
+model Barn {
+  id          String    @id @default(cuid())
+  rowId       String
+  name        String
+  code        String
+  description String?
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+  row         BarnRow   @relation(fields: [rowId], references: [id])
+  pens        Pen[]
+
+  @@index([rowId])
+}
+
+model Pen {
+  id                String        @id @default(cuid())
+  barnId            String
+  name              String
+  code              String
+  type              PenType       @default(GENERAL)
+  status            PenStatus     @default(AVAILABLE)
+  area              Float?
+  capacity          Int           @default(1)
+  currentCount      Int           @default(0)
+  temperature       Float?
+  humidity          Float?
+  notes             String?
+  positionX         Float?
+  positionY         Float?
+  width             Float?
+  height            Float?
+  color             String?
+  lastCleanedAt     DateTime?
+  lastDisinfectedAt DateTime?
+  isActive          Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
+  createdBy         String?
+  updatedBy         String?
+  farrowings        Farrowing[]
+  barn              Barn          @relation(fields: [barnId], references: [id])
+  cleanings         PenCleaning[]
+  pigs              Pig[]
+  feedConsumptions  FeedConsumption[]
+
+  @@index([barnId])
+  @@index([type])
+  @@index([status])
+}
+
+model PenCleaning {
+  id             String   @id @default(cuid())
+  farmId         String
+  penId          String
+  cleanedAt      DateTime @default(now())
+  isDisinfection Boolean  @default(false)
+  cleanedBy      String?
+  notes          String?
+  images         String[]
+  createdAt      DateTime @default(now())
+  farm           Farm     @relation(fields: [farmId], references: [id])
+  pen            Pen      @relation(fields: [penId], references: [id])
+
+  @@index([farmId])
+  @@index([penId])
+}
+
+model Breed {
+  id          String    @id @default(cuid())
+  farmId      String
+  name        String
+  code        String
+  origin      String?
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  farm        Farm      @relation(fields: [farmId], references: [id])
+  pigs        Pig[]
+
+  @@unique([farmId, code])
+  @@index([farmId])
+}
+
+model Pig {
+  id               String            @id @default(cuid())
+  farmId           String
+  code             String
+  earTag           String?
+  name             String?
+  breedId          String?
+  gender           PigGender
+  type             PigType
+  status           PigStatus         @default(ACTIVE)
+  birthDate        DateTime?
+  importDate       DateTime?
+  importSource     String?
+  importPrice      Float?
+  currentWeight    Float?
+  penId            String?
+  fatherId         String?
+  motherId         String?
+  markerColor      String?
+  images           String[]
+  notes            String?
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+  createdBy        String?
+  updatedBy        String?
+  farrowPiglets    FarrowingPiglet[]
+  fatteningRecords FatteningRecord[]
+  feedConsumptions FeedConsumption[]
+  giltEvaluations  GiltEvaluation[]
+  matingsAsBoar    Mating[]          @relation("MatingBoar")
+  matingsAsSow     Mating[]          @relation("MatingSow")
+  breed            Breed?            @relation(fields: [breedId], references: [id])
+  farm             Farm              @relation(fields: [farmId], references: [id])
+  father           Pig?              @relation("PigFather", fields: [fatherId], references: [id])
+  childrenAsFather Pig[]             @relation("PigFather")
+  mother           Pig?              @relation("PigMother", fields: [motherId], references: [id])
+  childrenAsMother Pig[]             @relation("PigMother")
+  pen              Pen?              @relation(fields: [penId], references: [id])
+  events           PigEvent[]
+  pigImages        PigImage[]
+  movements        PigMovement[]
+  weights          PigWeight[]
+  treatments       Treatment[]
+  vaccinations     Vaccination[]
+
+  @@unique([farmId, code])
+  @@index([farmId])
+  @@index([status])
+  @@index([type])
+  @@index([penId])
+  @@index([breedId])
+}
+
+model PigEvent {
+  id          String   @id @default(cuid())
+  pigId       String
+  eventType   String
+  eventDate   DateTime
+  title       String
+  description String?
+  metadata    Json?
+  images      String[]
+  createdAt   DateTime @default(now())
+  createdBy   String?
+  pig         Pig      @relation(fields: [pigId], references: [id])
+
+  @@index([pigId])
+  @@index([eventType])
+  @@index([eventDate])
+}
+
+model PigWeight {
+  id        String   @id @default(cuid())
+  pigId     String
+  weight    Float
+  date      DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  pig       Pig      @relation(fields: [pigId], references: [id])
+
+  @@index([pigId])
+  @@index([date])
+}
+
+model PigMovement {
+  id        String   @id @default(cuid())
+  pigId     String
+  fromPenId String?
+  toPenId   String?
+  movedAt   DateTime @default(now())
+  reason    String?
+  movedBy   String?
+  createdAt DateTime @default(now())
+  pig       Pig      @relation(fields: [pigId], references: [id])
+
+  @@index([pigId])
+}
+
+model PigImage {
+  id        String   @id @default(cuid())
+  pigId     String
+  url       String
+  caption   String?
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  pig       Pig      @relation(fields: [pigId], references: [id])
+
+  @@index([pigId])
+}
+
+model Mating {
+  id                     String            @id @default(cuid())
+  farmId                 String
+  sowId                  String
+  boarId                 String?
+  semenStockId           String?
+  matingDate             DateTime
+  matingNumber           Int               @default(1)
+  technician             String?
+  cost                   Float?
+  result                 MatingResult      @default(PENDING)
+  status                 BreedingStatus    @default(MATED)
+  notes                  String?
+  images                 String[]
+  expectedUltrasoundDate DateTime?
+  expectedFarrowingDate  DateTime?
+  expectedMoveToPenDate  DateTime?
+  expectedWeaningDate    DateTime?
+  ultrasoundDate         DateTime?
+  ultrasoundResult       UltrasoundResult?
+  ultrasoundFetusCount   Int?
+  isPregnant             Boolean?
+  pregnancyDays          Int?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  deletedAt              DateTime?
+  createdBy              String?
+  updatedBy              String?
+  farrowing              Farrowing?
+  boar                   Pig?              @relation("MatingBoar", fields: [boarId], references: [id])
+  farm                   Farm              @relation(fields: [farmId], references: [id])
+  semenStock             SemenStock?       @relation(fields: [semenStockId], references: [id])
+  sow                    Pig               @relation("MatingSow", fields: [sowId], references: [id])
+
+  @@index([farmId])
+  @@index([sowId])
+  @@index([boarId])
+  @@index([status])
+  @@index([matingDate])
+}
+
+model Farrowing {
+  id             String            @id @default(cuid())
+  farmId         String
+  matingId       String            @unique
+  penId          String?
+  moveToPenDate  DateTime?
+  farrowingDate  DateTime
+  startTime      DateTime?
+  endTime        DateTime?
+  attendant      String?
+  totalBorn      Int               @default(0)
+  bornAlive      Int               @default(0)
+  bornDead       Int               @default(0)
+  mummified      Int               @default(0)
+  avgBirthWeight Float?
+  notes          String?
+  images         String[]
+  videos         String[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?
+  updatedBy      String?
+  farm           Farm              @relation(fields: [farmId], references: [id])
+  mating         Mating            @relation(fields: [matingId], references: [id])
+  pen            Pen?              @relation(fields: [penId], references: [id])
+  piglets        FarrowingPiglet[]
+
+  @@index([farmId])
+  @@index([farrowingDate])
+}
+
+model FarrowingPiglet {
+  id              String     @id @default(cuid())
+  farrowingId     String
+  pigId           String?
+  pigletNumber    Int
+  gender          PigGender?
+  birthWeight     Float?
+  isAlive         Boolean    @default(true)
+  weaningDate     DateTime?
+  weaningWeight   Float?
+  postWeaningType PigType?
+  notes           String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  farrowing       Farrowing  @relation(fields: [farrowingId], references: [id])
+  pig             Pig?       @relation(fields: [pigId], references: [id])
+
+  @@index([farrowingId])
+  @@index([pigId])
+}
+
+model GiltEvaluation {
+  id          String   @id @default(cuid())
+  pigId       String
+  evaluatedAt DateTime @default(now())
+  evaluatedBy String?
+  frameScore  Float?
+  legScore    Float?
+  backScore   Float?
+  teatScore   Float?
+  bodyScore   Float?
+  totalScore  Float?
+  isPassed    Boolean  @default(false)
+  notes       String?
+  images      String[]
+  createdAt   DateTime @default(now())
+  pig         Pig      @relation(fields: [pigId], references: [id])
+
+  @@index([pigId])
+}
+
+model FatteningRecord {
+  id           String    @id @default(cuid())
+  pigId        String
+  recordDate   DateTime
+  weight       Float
+  dailyGain    Float?
+  fcr          Float?
+  feedConsumed Float?
+  cost         Float?
+  saleDate     DateTime?
+  saleWeight   Float?
+  salePrice    Float?
+  saleRevenue  Float?
+  buyer        String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  createdBy    String?
+  pig          Pig       @relation(fields: [pigId], references: [id])
+
+  @@index([pigId])
+  @@index([recordDate])
+}
+
+model VaccineType {
+  id            String                @id @default(cuid())
+  farmId        String
+  name          String
+  code          String
+  manufacturer  String?
+  description   String?
+  targetAge     Int?
+  intervalDays  Int?
+  dosage        String?
+  route         String?
+  isActive      Boolean               @default(true)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  deletedAt     DateTime?
+  vaccinations  Vaccination[]
+  schedules     VaccinationSchedule[]
+  vaccineStocks VaccineStock[]
+  farm          Farm                  @relation(fields: [farmId], references: [id])
+
+  @@unique([farmId, code])
+  @@index([farmId])
+}
+
+model Vaccination {
+  id            String      @id @default(cuid())
+  pigId         String
+  vaccineTypeId String
+  vaccinatedAt  DateTime
+  dosage        String?
+  batchNumber   String?
+  vaccinatedBy  String?
+  nextDueDate   DateTime?
+  notes         String?
+  images        String[]
+  createdAt     DateTime    @default(now())
+  createdBy     String?
+  pig           Pig         @relation(fields: [pigId], references: [id])
+  vaccineType   VaccineType @relation(fields: [vaccineTypeId], references: [id])
+
+  @@index([pigId])
+  @@index([vaccineTypeId])
+  @@index([vaccinatedAt])
+}
+
+model VaccinationSchedule {
+  id            String      @id @default(cuid())
+  vaccineTypeId String
+  pigType       PigType?
+  ageInDays     Int?
+  intervalDays  Int?
+  description   String?
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  vaccineType   VaccineType @relation(fields: [vaccineTypeId], references: [id])
+
+  @@index([vaccineTypeId])
+}
+
+model MedicineType {
+  id               String          @id @default(cuid())
+  farmId           String
+  name             String
+  code             String
+  activeIngredient String?
+  manufacturer     String?
+  description      String?
+  usage            String?
+  dosage           String?
+  withdrawalDays   Int?
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  deletedAt        DateTime?
+  medicineStocks   MedicineStock[]
+  farm             Farm            @relation(fields: [farmId], references: [id])
+  treatments       Treatment[]
+
+  @@unique([farmId, code])
+  @@index([farmId])
+}
+
+model Treatment {
+  id             String        @id @default(cuid())
+  pigId          String
+  medicineTypeId String?
+  diagnosis      String?
+  symptoms       String?
+  treatmentDate  DateTime
+  medicineName   String?
+  dosage         String?
+  duration       Int?
+  cost           Float?
+  treatedBy      String?
+  result         String?
+  endDate        DateTime?
+  notes          String?
+  images         String[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  createdBy      String?
+  medicineType   MedicineType? @relation(fields: [medicineTypeId], references: [id])
+  pig            Pig           @relation(fields: [pigId], references: [id])
+
+  @@index([pigId])
+  @@index([treatmentDate])
+}
+
+model FeedType {
+  id               String            @id @default(cuid())
+  farmId           String
+  name             String
+  code             String
+  manufacturer     String?
+  description      String?
+  nutritionInfo    String?
+  targetPigType    PigType?
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+  feedConsumptions FeedConsumption[]
+  feedStocks       FeedStock[]
+  feedTransactions FeedTransaction[]
+  farm             Farm              @relation(fields: [farmId], references: [id])
+
+  @@unique([farmId, code])
+  @@index([farmId])
+}
+
+model FeedStock {
+  id          String    @id @default(cuid())
+  farmId      String
+  feedTypeId  String
+  supplierId  String?
+  batchNumber String?
+  unitPrice   Float?
+  quantity    Float
+  remaining   Float
+  unitId      String?
+  expiryDate  DateTime?
+  importDate  DateTime  @default(now())
+  notes       String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  farm        Farm      @relation(fields: [farmId], references: [id])
+  feedType    FeedType  @relation(fields: [feedTypeId], references: [id])
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  unit        Unit?     @relation(fields: [unitId], references: [id])
+
+  @@index([farmId])
+  @@index([feedTypeId])
+}
+
+model FeedTransaction {
+  id         String          @id @default(cuid())
+  farmId     String
+  feedTypeId String
+  type       TransactionType
+  quantity   Float
+  unitPrice  Float?
+  totalPrice Float?
+  date       DateTime        @default(now())
+  reference  String?
+  notes      String?
+  createdAt  DateTime        @default(now())
+  createdBy  String?
+  farm       Farm            @relation(fields: [farmId], references: [id])
+  feedType   FeedType        @relation(fields: [feedTypeId], references: [id])
+
+  @@index([farmId])
+  @@index([feedTypeId])
+  @@index([date])
+}
+
+model FeedConsumption {
+  id         String   @id @default(cuid())
+  farmId     String
+  pigId      String?
+  penId      String?
+  feedTypeId String
+  quantity   Float
+  date       DateTime
+  notes      String?
+  createdAt  DateTime @default(now())
+  createdBy  String?
+  farm       Farm     @relation(fields: [farmId], references: [id])
+  feedType   FeedType @relation(fields: [feedTypeId], references: [id])
+  pen        Pen?     @relation(fields: [penId], references: [id])
+  pig        Pig?     @relation(fields: [pigId], references: [id])
+
+  @@index([farmId])
+  @@index([penId])
+  @@index([pigId])
+  @@index([feedTypeId])
+  @@index([date])
+}
+
+model MedicineStock {
+  id             String       @id @default(cuid())
+  farmId         String
+  medicineTypeId String
+  supplierId     String?
+  batchNumber    String?
+  unitPrice      Float?
+  quantity       Float
+  remaining      Float
+  unitId         String?
+  expiryDate     DateTime?
+  importDate     DateTime     @default(now())
+  notes          String?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?
+  farm           Farm         @relation(fields: [farmId], references: [id])
+  medicineType   MedicineType @relation(fields: [medicineTypeId], references: [id])
+  supplier       Supplier?    @relation(fields: [supplierId], references: [id])
+  unit           Unit?        @relation(fields: [unitId], references: [id])
+
+  @@index([farmId])
+  @@index([medicineTypeId])
+}
+
+model VaccineStock {
+  id            String      @id @default(cuid())
+  farmId        String
+  vaccineTypeId String
+  supplierId    String?
+  batchNumber   String?
+  unitPrice     Float?
+  quantity      Float
+  remaining     Float
+  unitId        String?
+  expiryDate    DateTime?
+  importDate    DateTime    @default(now())
+  notes         String?
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  deletedAt     DateTime?
+  createdBy     String?
+  farm          Farm        @relation(fields: [farmId], references: [id])
+  supplier      Supplier?   @relation(fields: [supplierId], references: [id])
+  unit          Unit?       @relation(fields: [unitId], references: [id])
+  vaccineType   VaccineType @relation(fields: [vaccineTypeId], references: [id])
+
+  @@index([farmId])
+  @@index([vaccineTypeId])
+}
+
+model SemenStock {
+  id          String    @id @default(cuid())
+  farmId      String
+  supplierId  String?
+  breedName   String?
+  boarCode    String?
+  batchNumber String?
+  unitPrice   Float?
+  quantity    Int
+  remaining   Int
+  expiryDate  DateTime?
+  importDate  DateTime  @default(now())
+  notes       String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  matings     Mating[]
+  farm        Farm      @relation(fields: [farmId], references: [id])
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+
+  @@index([farmId])
+}
+
+model SupplyType {
+  id           String        @id @default(cuid())
+  farmId       String
+  name         String
+  code         String
+  description  String?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+  supplyStocks SupplyStock[]
+  farm         Farm          @relation(fields: [farmId], references: [id])
+
+  @@unique([farmId, code])
+  @@index([farmId])
+}
+
+model SupplyStock {
+  id           String     @id @default(cuid())
+  farmId       String
+  supplyTypeId String
+  supplierId   String?
+  quantity     Float
+  remaining    Float
+  unitPrice    Float?
+  unitId       String?
+  importDate   DateTime   @default(now())
+  notes        String?
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?
+  farm         Farm       @relation(fields: [farmId], references: [id])
+  supplier     Supplier?  @relation(fields: [supplierId], references: [id])
+  supplyType   SupplyType @relation(fields: [supplyTypeId], references: [id])
+  unit         Unit?      @relation(fields: [unitId], references: [id])
+
+  @@index([farmId])
+  @@index([supplyTypeId])
+}
+
+model Income {
+  id          String     @id @default(cuid())
+  farmId      String
+  type        IncomeType
+  amount      Float
+  date        DateTime
+  description String?
+  reference   String?
+  customer    String?
+  pigCount    Int?
+  totalWeight Float?
+  pricePerKg  Float?
+  notes       String?
+  images      String[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  farm        Farm       @relation(fields: [farmId], references: [id])
+
+  @@index([farmId])
+  @@index([date])
+  @@index([type])
+}
+
+model Expense {
+  id          String      @id @default(cuid())
+  farmId      String
+  type        ExpenseType
+  amount      Float
+  date        DateTime
+  description String?
+  reference   String?
+  supplierId  String?
+  notes       String?
+  images      String[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  farm        Farm        @relation(fields: [farmId], references: [id])
+
+  @@index([farmId])
+  @@index([date])
+  @@index([type])
+}
+
+model Employee {
+  id              String           @id @default(cuid())
+  farmId          String
+  name            String
+  phone           String?
+  email           String?
+  address         String?
+  role            String?
+  department      String?
+  startDate       DateTime?
+  salary          Float?
+  avatar          String?
+  assignedZoneId  String?
+  notes           String?
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+  createdBy       String?
+  farm            Farm             @relation(fields: [farmId], references: [id])
+  taskAssignments TaskAssignment[]
+  workShifts      WorkShift[]
+
+  @@index([farmId])
+}
+
+model WorkShift {
+  id         String   @id @default(cuid())
+  employeeId String
+  shiftDate  DateTime
+  startTime  String
+  endTime    String
+  notes      String?
+  createdAt  DateTime @default(now())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([employeeId])
+  @@index([shiftDate])
+}
+
+model Task {
+  id            String           @id @default(cuid())
+  farmId        String
+  type          TaskType
+  title         String
+  description   String?
+  status        TaskStatus       @default(PENDING)
+  priority      Int              @default(0)
+  dueDate       DateTime?
+  completedAt   DateTime?
+  penId         String?
+  pigId         String?
+  isRecurring   Boolean          @default(false)
+  recurringDays Int?
+  notes         String?
+  images        String[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  deletedAt     DateTime?
+  createdBy     String?
+  farm          Farm             @relation(fields: [farmId], references: [id])
+  assignments   TaskAssignment[]
+  completions   TaskCompletion[]
+
+  @@index([farmId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([type])
+}
+
+model TaskAssignment {
+  id         String   @id @default(cuid())
+  taskId     String
+  employeeId String
+  assignedAt DateTime @default(now())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  task       Task     @relation(fields: [taskId], references: [id])
+
+  @@unique([taskId, employeeId])
+  @@index([taskId])
+  @@index([employeeId])
+}
+
+model TaskCompletion {
+  id          String   @id @default(cuid())
+  taskId      String
+  completedBy String
+  completedAt DateTime @default(now())
+  notes       String?
+  images      String[]
+  createdAt   DateTime @default(now())
+  task        Task     @relation(fields: [taskId], references: [id])
+
+  @@index([taskId])
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  farmId      String
+  userId      String?
+  action      AuditAction
+  entity      String
+  entityId    String?
+  dataBefore  Json?
+  dataAfter   Json?
+  ipAddress   String?
+  userAgent   String?
+  description String?
+  createdAt   DateTime    @default(now())
+  farm        Farm        @relation(fields: [farmId], references: [id])
+  user        User?       @relation(fields: [userId], references: [id])
+
+  @@index([farmId])
+  @@index([userId])
+  @@index([entity])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  farmId    String
+  userId    String?
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  link      String?
+  metadata  Json?
+  createdAt DateTime         @default(now())
+  readAt    DateTime?
+  farm      Farm             @relation(fields: [farmId], references: [id])
+  user      User?            @relation(fields: [userId], references: [id])
+
+  @@index([farmId])
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model SystemParameter {
+  id          String   @id @default(cuid())
+  farmId      String
+  key         String
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  farm        Farm     @relation(fields: [farmId], references: [id])
+
+  @@unique([farmId, key])
+  @@index([farmId])
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  farmId    String
+  type      String
+  name      String
+  code      String?
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  farm      Farm      @relation(fields: [farmId], references: [id])
+
+  @@index([farmId])
+  @@index([type])
+}
+
+model Supplier {
+  id             String          @id @default(cuid())
+  farmId         String
+  name           String
+  code           String?
+  phone          String?
+  email          String?
+  address        String?
+  contactName    String?
+  notes          String?
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+  feedStocks     FeedStock[]
+  medicineStocks MedicineStock[]
+  semenStocks    SemenStock[]
+  farm           Farm            @relation(fields: [farmId], references: [id])
+  supplyStocks   SupplyStock[]
+  vaccineStocks  VaccineStock[]
+
+  @@index([farmId])
+  @@unique([farmId, code])
+}
+
+model Unit {
+  id             String          @id @default(cuid())
+  farmId         String
+  name           String
+  code           String
+  description    String?
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  feedStocks     FeedStock[]
+  medicineStocks MedicineStock[]
+  supplyStocks   SupplyStock[]
+  farm           Farm            @relation(fields: [farmId], references: [id])
+  vaccineStocks  VaccineStock[]
+
+  @@unique([farmId, code])
+  @@index([farmId])
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  VETERINARIAN
+  WORKER
+  VIEWER
+}
+
+enum PigType {
+  SOW
+  BOAR
+  GILT
+  FATTENING
+  PIGLET
+}
+
+enum PigStatus {
+  ACTIVE
+  PREGNANT
+  NURSING
+  FATTENING_STATUS
+  TREATMENT
+  SOLD
+  CULLED
+  DEAD
+  INACTIVE
+}
+
+enum PigGender {
+  MALE
+  FEMALE
+}
+
+enum PenType {
+  MATING
+  GESTATION
+  FARROWING
+  NURSERY
+  FATTENING
+  GILT_PEN
+  BOAR_PEN
+  QUARANTINE
+  GENERAL
+}
+
+enum PenStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+  CLEANING
+  DISABLED
+}
+
+enum BreedingStatus {
+  ESTRUS
+  MATED
+  PREGNANT
+  NOT_PREGNANT
+  FARROWED
+  WEANED
+  ABORTED
+  CANCELLED
+}
+
+enum MatingResult {
+  PENDING
+  SUCCESS
+  FAILED
+  UNKNOWN
+}
+
+enum UltrasoundResult {
+  POSITIVE
+  NEGATIVE
+  UNCERTAIN
+}
+
+enum TransactionType {
+  IMPORT
+  EXPORT
+  CONSUME
+  ADJUST
+  RETURN
+}
+
+enum IncomeType {
+  PIG_SALE
+  MANURE_SALE
+  OTHER_INCOME
+}
+
+enum ExpenseType {
+  FEED
+  MEDICINE
+  VACCINE
+  SEMEN
+  ELECTRICITY
+  WATER
+  SALARY
+  DEPRECIATION
+  REPAIR
+  SUPPLIES
+  OTHER
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+  CANCELLED
+}
+
+enum TaskType {
+  FEEDING
+  VACCINATION
+  TREATMENT
+  CLEANING
+  DISINFECTION
+  WEIGHING
+  DEWORMING
+  MATING
+  FARROWING
+  WEANING
+  MOVING
+  OTHER
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  RESTORE
+  STATUS_CHANGE
+  MOVE
+  LOGIN
+  LOGOUT
+}
+
+enum NotificationType {
+  LOW_STOCK
+  EXPIRING_STOCK
+  FARROWING_DUE
+  VACCINATION_DUE
+  MATING_DUE
+  CLEANING_DUE
+  TASK_OVERDUE
+  WEANING_DUE
+  ULTRASOUND_DUE
+  SYSTEM
+}
