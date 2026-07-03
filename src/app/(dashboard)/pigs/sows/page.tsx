@@ -29,7 +29,7 @@ export default function SowsPage() {
     search: search || undefined,
     type: 'SOW',
     status,
-    sortBy: 'code',
+    sortBy: 'earTag',
     sortOrder: 'asc',
   })
 
