@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 /**
  * Auth middleware - refreshes session and redirects unauthenticated users
  */
-export default async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
